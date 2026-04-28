@@ -16,7 +16,7 @@
             padding: 20px;
         }
         .container {
-            max-width: 800px;
+            max-width: 900px;
             margin: 0 auto;
             background: white;
             padding: 30px;
@@ -61,6 +61,13 @@
             border-radius: 10px;
             line-height: 1.8;
             font-size: 18px;
+            text-align: center;
+        }
+        img {
+            max-width: 100%;
+            border-radius: 10px;
+            margin-top: 20px;
+            box-shadow: 0 0 5px rgba(0,0,0,0.2);
         }
     </style>
 </head>
@@ -68,25 +75,43 @@
     <div class="container">
         <h1>📰 儿童识字小报生成器</h1>
         <div class="input-area">
-            <textarea placeholder="请输入儿童生字、词语或句子，一键生成小报内容……"></textarea>
-            <button onclick="generatePaper()">生成小报</button>
+            <textarea placeholder="请输入生字，例如：春天、学校、家人、水果"></textarea>
+            <button onclick="generatePaper()">生成小报图片</button>
         </div>
         <div class="result" id="result"></div>
     </div>
 
     <script>
-        function generatePaper() {
-            let text = document.querySelector("textarea").value;
+        async function generatePaper() {
+            let text = document.querySelector("textarea").value.trim();
             if (!text) {
                 alert("请输入内容！");
                 return;
             }
-            let result = `
-            <h3>✨ 儿童识字小报</h3>
-            <p>📖 学习内容：${text}</p>
-            <p>⭐ 每天读一读，识字更轻松！</p>
-            `;
-            document.getElementById("result").innerHTML = result;
+
+            let resultDiv = document.getElementById("result");
+            resultDiv.innerHTML = "⏳ 正在生成小报图片，请稍候...";
+
+            try {
+                let prompt = `儿童识字小报，主题：${text}，卡通风格，色彩明亮，适合小学生，清晰美观`;
+                
+                let res = await fetch("https://api.nanobanana.pro/api/generate", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ prompt: prompt })
+                });
+
+                let data = await res.json();
+                let imageUrl = data.imageUrl;
+
+                resultDiv.innerHTML = `
+                    <h3>✅ 生成成功！</h3>
+                    <img src="${imageUrl}" alt="识字小报">
+                    <p>📖 学习内容：${text}</p>
+                `;
+            } catch (err) {
+                resultDiv.innerHTML = "❌ 生成失败，请重试";
+            }
         }
     </script>
 </body>
