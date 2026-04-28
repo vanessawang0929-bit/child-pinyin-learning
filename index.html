@@ -1,0 +1,864 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>儿童识字小报生成器</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, #fef3c7 0%, #fff7ed 100%);
+      min-height: 100vh;
+      padding: 2rem 1rem;
+    }
+    .container { max-width: 800px; margin: 0 auto; }
+    h1 {
+      text-align: center;
+      color: #ea580c;
+      font-size: 1.875rem;
+      margin-bottom: 2rem;
+    }
+    .card {
+      background: white;
+      border-radius: 1rem;
+      box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1);
+      padding: 2rem;
+      margin-bottom: 1.5rem;
+    }
+    h2 {
+      font-size: 1.25rem;
+      color: #1f2937;
+      margin-bottom: 1rem;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+      gap: 0.75rem;
+    }
+    .topic-btn {
+      padding: 1rem;
+      border: 1px solid #e5e7eb;
+      border-radius: 0.75rem;
+      background: white;
+      cursor: pointer;
+      text-align: center;
+      font-weight: 500;
+      color: #374151;
+      transition: all 0.2s;
+    }
+    .topic-btn:hover {
+      border-color: #f97316;
+      background: #fff7ed;
+    }
+    .topic-btn.selected {
+      border-color: #f97316;
+      background: #fff7ed;
+      box-shadow: 0 0 0 2px #fb923c40;
+    }
+    .custom-link {
+      text-align: center;
+      margin-top: 1rem;
+    }
+    .custom-link button {
+      background: none;
+      border: none;
+      color: #f97316;
+      cursor: pointer;
+      font-weight: 500;
+    }
+    .preset-info {
+      background: #fff7ed;
+      border: 1px solid #fed7aa;
+      border-radius: 0.75rem;
+      padding: 1rem;
+      margin-bottom: 1rem;
+    }
+    .preset-info .title-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .preset-info .topic-label {
+      font-weight: 600;
+      color: #c2410c;
+    }
+    .preset-info .change-btn {
+      font-size: 0.875rem;
+      color: #f97316;
+      background: none;
+      border: none;
+      cursor: pointer;
+    }
+    .preset-info .titles {
+      margin-top: 0.75rem;
+    }
+    .preset-info .titles-label {
+      font-size: 0.875rem;
+      color: #6b7280;
+      margin-bottom: 0.5rem;
+    }
+    .preset-info .title-btns {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+    .preset-info .title-btn {
+      padding: 0.375rem 0.75rem;
+      border-radius: 9999px;
+      font-size: 0.875rem;
+      border: 1px solid #d1d5db;
+      background: white;
+      cursor: pointer;
+    }
+    .preset-info .title-btn.selected {
+      background: #f97316;
+      color: white;
+      border-color: #f97316;
+    }
+    .preset-info .words-preview {
+      margin-top: 0.75rem;
+      padding-top: 0.75rem;
+      border-top: 1px solid #fed7aa;
+    }
+    .preset-info .words-label {
+      font-size: 0.875rem;
+      color: #6b7280;
+      margin-bottom: 0.5rem;
+    }
+    .preset-info .word-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.25rem;
+    }
+    .preset-info .word-tag {
+      font-size: 0.75rem;
+      padding: 0.25rem 0.5rem;
+      background: white;
+      border: 1px solid #e5e7eb;
+      border-radius: 0.25rem;
+    }
+    .form-group { margin-bottom: 1rem; }
+    label {
+      display: block;
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: #374151;
+      margin-bottom: 0.5rem;
+    }
+    input[type="text"], textarea, input[type="password"] {
+      width: 100%;
+      padding: 0.75rem;
+      border: 1px solid #d1d5db;
+      border-radius: 0.5rem;
+      font-size: 1rem;
+    }
+    input:focus, textarea:focus {
+      outline: none;
+      border-color: #f97316;
+      box-shadow: 0 0 0 3px rgba(249,115,22,0.1);
+    }
+    textarea {
+      font-family: monospace;
+      height: 16rem;
+      resize: vertical;
+    }
+    .btn {
+      width: 100%;
+      padding: 0.875rem;
+      background: #f97316;
+      color: white;
+      border: none;
+      border-radius: 0.5rem;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .btn:hover:not(:disabled) { background: #ea580c; }
+    .btn:disabled { background: #d1d5db; cursor: not-allowed; }
+    .btn-secondary {
+      width: auto;
+      background: white;
+      border: 1px solid #d1d5db;
+      color: #374151;
+      padding: 0.875rem 1.5rem;
+    }
+    .btn-secondary:hover { background: #f9fafb; }
+    .btn-row {
+      display: flex;
+      gap: 1rem;
+      margin-top: 1rem;
+    }
+    .btn-row .btn { flex: 1; }
+    .alert {
+      padding: 0.75rem 1rem;
+      border-radius: 0.5rem;
+      margin-bottom: 1rem;
+    }
+    .alert-error {
+      background: #fef2f2;
+      border: 1px solid #fecaca;
+      color: #b91c1c;
+    }
+    .alert-info {
+      background: #eff6ff;
+      border: 1px solid #bfdbfe;
+      color: #1d4ed8;
+      text-align: center;
+    }
+    .result-img {
+      width: 100%;
+      border-radius: 0.5rem;
+      margin-bottom: 1rem;
+    }
+    .result-btns {
+      display: flex;
+      gap: 1rem;
+    }
+    .result-btns .btn-secondary {
+      flex: 1;
+    }
+    .hidden { display: none; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>儿童识字小报生成器</h1>
+
+    <div id="alertError" class="alert alert-error hidden"></div>
+
+    <!-- Step 1: Select Topic -->
+    <div id="stepSelect" class="card">
+      <h2>选择主题</h2>
+      <div class="grid" id="topicGrid"></div>
+      <div class="custom-link">
+        <button onclick="showCustomTopic()">或者自定义主题 →</button>
+      </div>
+    </div>
+
+    <!-- Step 2: Input Form -->
+    <div id="stepInput" class="hidden">
+      <div id="presetInfo" class="preset-info hidden"></div>
+      <div class="card">
+        <div class="form-group">
+          <label>主题/场景</label>
+          <input type="text" id="topicInput" placeholder="如：超市、医院、公园">
+        </div>
+        <div class="form-group">
+          <label>小报标题</label>
+          <input type="text" id="titleInput" placeholder="如：《走进超市》《快乐医院》">
+        </div>
+        <button id="generateBtn" class="btn" onclick="generatePrompt()">生成提示词</button>
+      </div>
+    </div>
+
+    <!-- Step 3: Confirm Prompt -->
+    <div id="stepConfirm" class="hidden">
+      <div class="card">
+        <h2>编辑提示词</h2>
+        <p style="color:#6b7280;font-size:0.875rem;margin-bottom:1rem">
+          请确认或修改以下提示词，然后输入 API Key 开始生成图片
+        </p>
+        <textarea id="promptTextarea"></textarea>
+        <div class="form-group" style="margin-top:1rem">
+          <label>API Key (kie.ai)</label>
+          <input type="password" id="apiKeyInput" placeholder="输入您的 API Key">
+        </div>
+        <div class="btn-row">
+          <button id="confirmBtn" class="btn" onclick="generateImage()">确认并生成图片</button>
+          <button class="btn btn-secondary" onclick="resetAll()">重新开始</button>
+        </div>
+      </div>
+      <div id="pollingAlert" class="alert alert-info hidden">正在生成图片，请稍候...</div>
+    </div>
+
+    <!-- Step 4: Result -->
+    <div id="stepResult" class="hidden">
+      <div class="card">
+        <h2>生成结果</h2>
+        <div id="resultImages"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const PRESETS = [
+      {
+        topic: '超市',
+        titles: ['《走进超市》', '《超市购物乐》', '《小小购物员》'],
+        words: {
+          coreRoles: [
+            { p: 'shōu yín yuán', h: '收银员' },
+            { p: 'guǎn lǐ yuán', h: '管理员' },
+            { p: 'gù kè', h: '顾客' },
+            { p: 'ān bǎo yuán', h: '安保员' },
+          ],
+          commonItems: [
+            { p: 'tuī chē', h: '推车' },
+            { p: 'gòu wù lán', h: '购物篮' },
+            { p: 'píng guǒ', h: '苹果' },
+            { p: 'niú nǎi', h: '牛奶' },
+            { p: 'miàn bāo', h: '面包' },
+            { p: 'shuǐ guǒ', h: '水果' },
+            { p: 'cài yè', h: '菜叶' },
+            { p: 'jī dàn', h: '鸡蛋' },
+          ],
+          environment: [
+            { p: 'huò jià', h: '货架' },
+            { p: 'chū kǒu', h: '出口' },
+            { p: 'rù kǒu', h: '入口' },
+            { p: 'shōu yín tái', h: '收银台' },
+            { p: 'jià qiān', h: '价签' },
+          ],
+        },
+      },
+      {
+        topic: '医院',
+        titles: ['《快乐医院》', '《看医生》', '《健康小卫士》'],
+        words: {
+          coreRoles: [
+            { p: 'yī shēng', h: '医生' },
+            { p: 'hù shi', h: '护士' },
+            { p: 'bìng rén', h: '病人' },
+            { p: 'bìng jiā shǔ', h: '病人家属' },
+          ],
+          commonItems: [
+            { p: 'tīng zhěn qì', h: '听诊器' },
+            { p: 'yào', h: '药' },
+            { p: 'bēi zi', h: '杯子' },
+            { p: 'shuǐ hú', h: '水壶' },
+            { p: 'chuáng', h: '床' },
+            { p: 'zhěn liáo qì', h: '诊疗器' },
+            { p: 'kǒu zhào', h: '口罩' },
+            { p: 'xuè yā qì', h: '血压器' },
+          ],
+          environment: [
+            { p: 'zhěn suǒ', h: '诊所' },
+            { p: 'bìng fáng', h: '病房' },
+            { p: 'zǒu láng', h: '走廊' },
+            { p: 'dēng guāng', h: '灯光' },
+            { p: 'chuāng hù', h: '窗户' },
+          ],
+        },
+      },
+      {
+        topic: '公园',
+        titles: ['《公园玩耍》', '《春天的公园》', '《户外游戏》'],
+        words: {
+          coreRoles: [
+            { p: 'xiǎo péng yǒu', h: '小朋友' },
+            { p: 'bà ba', h: '爸爸' },
+            { p: 'mā ma', h: '妈妈' },
+            { p: 'yé ye', h: '爷爷' },
+          ],
+          commonItems: [
+            { p: 'qiū qiān', h: '秋千' },
+            { p: 'huá tī', h: '滑梯' },
+            { p: 'shā kēng', h: '沙坑' },
+            { p: 'bèng chuáng', h: '蹦床' },
+            { p: 'huā duǒ', h: '花朵' },
+            { p: 'cǎo pí', h: '草坪' },
+            { p: 'fēng zheng', h: '风筝' },
+            { p: 'qiú', h: '球' },
+          ],
+          environment: [
+            { p: 'shù', h: '树' },
+            { p: 'cháng yǐ', h: '长椅' },
+            { p: 'lù dēng', h: '路灯' },
+            { p: 'hú', h: '湖' },
+            { p: 'xiǎo qiáo', h: '小桥' },
+          ],
+        },
+      },
+      {
+        topic: '学校',
+        titles: ['《我的学校》', '《上课啦》', '《快乐学习》'],
+        words: {
+          coreRoles: [
+            { p: 'lǎo shī', h: '老师' },
+            { p: 'tóng xué', h: '同学' },
+            { p: 'xiào zhǎng', h: '校长' },
+            { p: 'mén wèi', h: '门卫' },
+          ],
+          commonItems: [
+            { p: 'shū bāo', h: '书包' },
+            { p: 'bǐ', h: '笔' },
+            { p: 'běn zi', h: '本子' },
+            { p: 'kè zhuō', h: '课桌' },
+            { p: 'hēi bǎn', h: '黑板' },
+            { p: 'fěn bǐ', h: '粉笔' },
+            { p: 'tú shū', h: '图书' },
+            { p: 'wá wa', h: '娃娃' },
+          ],
+          environment: [
+            { p: 'jiào shì', h: '教室' },
+            { p: 'cāo chǎng', h: '操场' },
+            { p: 'lǐ táng', h: '礼堂' },
+            { p: 'lóu tī', h: '楼梯' },
+            { p: 'guó qí', h: '国旗' },
+          ],
+        },
+      },
+      {
+        topic: '餐厅',
+        titles: ['《美味餐厅》', '《小小厨师》', '《美食之旅》'],
+        words: {
+          coreRoles: [
+            { p: 'chú shī', h: '厨师' },
+            { p: 'fú wù yuán', h: '服务员' },
+            { p: 'gù kè', h: '顾客' },
+            { p: 'shōu yín yuán', h: '收银员' },
+          ],
+          commonItems: [
+            { p: 'fàn wǎn', h: '饭碗' },
+            { p: 'cài', h: '菜' },
+            { p: 'tāng', h: '汤' },
+            { p: 'jiǎn dāo', h: '剪刀' },
+            { p: 'sháo zi', h: '勺子' },
+            { p: 'kuài zi', h: '筷子' },
+            { p: 'bēi zi', h: '杯子' },
+            { p: 'pán zi', h: '盘子' },
+          ],
+          environment: [
+            { p: 'zhuō yǐ', h: '桌椅' },
+            { p: 'chú fáng', h: '厨房' },
+            { p: 'mén', h: '门' },
+            { p: 'chuāng hù', h: '窗户' },
+            { p: 'dēng', h: '灯' },
+          ],
+        },
+      },
+      {
+        topic: '图书馆',
+        titles: ['《图书馆探险》', '《爱读书》', '《书本世界》'],
+        words: {
+          coreRoles: [
+            { p: 'tú shū guǎn yuán', h: '图书馆管理员' },
+            { p: 'xiǎo dú zhě', h: '小读者' },
+            { p: 'lǎo shī', h: '老师' },
+            { p: 'bà ba mā ma', h: '爸爸妈妈' },
+          ],
+          commonItems: [
+            { p: 'shū', h: '书' },
+            { p: 'shū jià', h: '书架' },
+            { p: 'zhuō zi', h: '桌子' },
+            { p: 'yǐ zi', h: '椅子' },
+            { p: 'bǐ jì běn', h: '笔记本' },
+            { p: 'xiàng pí', h: '橡皮' },
+            { p: 'qiān bǐ', h: '铅笔' },
+            { p: 'shū qiān', h: '书签' },
+          ],
+          environment: [
+            { p: 'mén', h: '门' },
+            { p: 'chuāng', h: '窗' },
+            { p: 'dēng', h: '灯' },
+            { p: 'dì tǎn', h: '地毯' },
+            { p: 'huà', h: '画' },
+          ],
+        },
+      },
+      {
+        topic: '消防局',
+        titles: ['《消防员叔叔》', '《安全消防》', '《救火英雄》'],
+        words: {
+          coreRoles: [
+            { p: 'xiāo fáng yuán', h: '消防员' },
+            { p: 'zhǐ huī yuán', h: '指挥员' },
+            { p: 'jǐng chá', h: '警察' },
+            { p: 'jiù hù rén yuán', h: '救护人员' },
+          ],
+          commonItems: [
+            { p: 'shuǐ qiāng', h: '水枪' },
+            { p: 'shuǐ dài', h: '水带' },
+            { p: 'fáng huǒ yī', h: '防火衣' },
+            { p: 'tóu kuī', h: '头盔' },
+            { p: 'fáng miàn qì', h: '防面器' },
+            { p: 'duò chē', h: '舵车' },
+            { p: 'tī zi', h: '梯子' },
+            { p: 'gōng jù', h: '工具' },
+          ],
+          environment: [
+            { p: 'chē kù', h: '车库' },
+            { p: 'tǎn bù', h: '坦布' },
+            { p: 'cāo chǎng', h: '操场' },
+            { p: 'bào jǐng qì', h: '报警器' },
+            { p: 'mén', h: '门' },
+          ],
+        },
+      },
+      {
+        topic: '农场',
+        titles: ['《开心农场》', '《乡村之旅》', '《小农夫》'],
+        words: {
+          coreRoles: [
+            { p: 'nóng fū', h: '农夫' },
+            { p: 'mù yáng rén', h: '牧羊人' },
+            { p: 'gē ge', h: '哥哥' },
+            { p: 'jiě jie', h: '姐姐' },
+          ],
+          commonItems: [
+            { p: 'niú', h: '牛' },
+            { p: 'yáng', h: '羊' },
+            { p: 'jī', h: '鸡' },
+            { p: 'zhū', h: '猪' },
+            { p: 'luó bo', h: '萝卜' },
+            { p: 'bái cài', h: '白菜' },
+            { p: 'yù mǐ', h: '玉米' },
+            { p: 'gē zi', h: '鸽子' },
+          ],
+          environment: [
+            { p: 'tián', h: '田' },
+            { p: 'gēn', h: '根' },
+            { p: 'mù wū', h: '木屋' },
+            { p: 'shuǐ jǐng', h: '水井' },
+            { p: 'lù', h: '路' },
+          ],
+        },
+      },
+    ];
+
+    let selectedPreset = null;
+    let currentPrompt = '';
+    let imageHistory = [];  // Store all generated image URLs
+    let currentIndex = -1;  // Current image index
+
+    // Initialize topic grid
+    function initTopicGrid() {
+      const grid = document.getElementById('topicGrid');
+      grid.innerHTML = PRESETS.map(p => `
+        <button class="topic-btn" onclick="selectPreset('${p.topic}')">${p.topic}</button>
+      `).join('');
+    }
+
+    function selectPreset(topic) {
+      selectedPreset = PRESETS.find(p => p.topic === topic);
+      showPresetInfo();
+      document.getElementById('topicInput').value = selectedPreset.topic;
+      document.getElementById('titleInput').value = '';
+      document.getElementById('stepSelect').classList.add('hidden');
+      document.getElementById('stepInput').classList.remove('hidden');
+    }
+
+    function showCustomTopic() {
+      selectedPreset = null;
+      document.getElementById('presetInfo').classList.add('hidden');
+      document.getElementById('topicInput').value = '';
+      document.getElementById('titleInput').value = '';
+      document.getElementById('stepSelect').classList.add('hidden');
+      document.getElementById('stepInput').classList.remove('hidden');
+    }
+
+    function showPresetInfo() {
+      if (!selectedPreset) return;
+      const info = document.getElementById('presetInfo');
+      const allWords = [
+        ...selectedPreset.words.coreRoles,
+        ...selectedPreset.words.commonItems,
+        ...selectedPreset.words.environment,
+      ];
+      info.innerHTML = `
+        <div class="title-row">
+          <span class="topic-label">已选择: ${selectedPreset.topic}</span>
+          <button class="change-btn" onclick="changePreset()">更换</button>
+        </div>
+        <div class="titles">
+          <div class="titles-label">推荐标题：</div>
+          <div class="title-btns">
+            ${selectedPreset.titles.map(t => `
+              <button class="title-btn" onclick="selectTitle('${t}')">${t}</button>
+            `).join('')}
+          </div>
+        </div>
+        <div class="words-preview">
+          <div class="words-label">预设词汇预览：</div>
+          <div class="word-tags">
+            ${allWords.map(w => `<span class="word-tag">${w.h}</span>`).join('')}
+          </div>
+        </div>
+      `;
+      info.classList.remove('hidden');
+    }
+
+    function selectTitle(title) {
+      document.getElementById('titleInput').value = title;
+      document.querySelectorAll('.title-btn').forEach(btn => {
+        btn.classList.toggle('selected', btn.textContent.trim() === title);
+      });
+    }
+
+    function changePreset() {
+      selectedPreset = null;
+      document.getElementById('stepInput').classList.add('hidden');
+      document.getElementById('stepSelect').classList.remove('hidden');
+    }
+
+    function generatePrompt() {
+      const topic = document.getElementById('topicInput').value.trim();
+      const title = document.getElementById('titleInput').value.trim();
+      if (!topic || !title) {
+        showError('请输入主题和标题');
+        return;
+      }
+
+      let coreRolesText = '';
+      let commonItemsText = '';
+      let environmentText = '';
+
+      if (selectedPreset) {
+        coreRolesText = selectedPreset.words.coreRoles.map(w => `${w.p} ${w.h}`).join(', ');
+        commonItemsText = selectedPreset.words.commonItems.map(w => `${w.p} ${w.h}`).join(', ');
+        environmentText = selectedPreset.words.environment.map(w => `${w.p} ${w.h}`).join(', ');
+      } else {
+        coreRolesText = 'shōu yín yuán 收银员, gù kè 顾客, tuī chē 推车';
+        commonItemsText = 'píng guǒ 苹果, niú nǎi 牛奶, miàn bāo 面包, shuǐ guǒ 水果';
+        environmentText = 'huò jià 货架, chū kǒu 出口, rù kǒu 入口';
+      }
+
+      currentPrompt = `请生成一张儿童识字小报《${topic}》，竖版 A4，学习小报版式，适合 5–9 岁孩子 认字与看图识物。
+
+# 一、小报标题区（顶部）
+
+**顶部居中大标题**：《${title}》
+* **风格**：十字小报 / 儿童学习报感
+* **文本要求**：大字、醒目、卡通手写体、彩色描边
+* **装饰**：周围添加与 ${topic} 相关的贴纸风装饰，颜色鲜艳
+
+# 二、小报主体（中间主画面）
+
+画面中心是一幅 **卡通插画风的「${topic}」场景**：
+* **整体气氛**：明亮、温暖、积极
+* **构图**：物体边界清晰，方便对应文字，不要过于拥挤。
+
+**场景分区与核心内容**
+1.  **核心区域 A（主要对象）**：表现 ${topic} 的核心活动。
+2.  **核心区域 B（配套设施）**：展示相关的工具或物品。
+3.  **核心区域 C（环境背景）**：体现环境特征（如墙面、指示牌等）。
+
+**主题人物**
+* **角色**：1 位可爱卡通人物（职业/身份：与 ${topic} 匹配）。
+* **动作**：正在进行与场景相关的自然互动。
+
+# 三、必画物体与识字清单（Generated Content）
+
+**请务必在画面中清晰绘制以下物体，并为其预留贴标签的位置：**
+
+**1. 核心角色与设施：**
+${coreRolesText}
+
+**2. 常见物品/工具：**
+${commonItemsText}
+
+**3. 环境与装饰：**
+${environmentText}
+
+*(注意：画面中的物体数量不限于此，但以上列表必须作为重点描绘对象)*
+
+# 四、识字标注规则
+
+对上述清单中的物体，贴上中文识字标签：
+* **格式**：两行制（第一行拼音带声调，第二行简体汉字）。
+* **样式**：彩色小贴纸风格，白底黑字或深色字，清晰可读。
+* **排版**：标签靠近对应的物体，不遮挡主体。
+
+# 五、画风参数
+* **风格**：儿童绘本风 + 识字小报风
+* **色彩**：高饱和、明快、温暖 (High Saturation, Warm Tone)
+* **质量**：8k resolution, high detail, vector illustration style, clean lines.`;
+
+      document.getElementById('promptTextarea').value = currentPrompt;
+      document.getElementById('stepInput').classList.add('hidden');
+      document.getElementById('stepConfirm').classList.remove('hidden');
+    }
+
+    async function generateImage() {
+      const apiKey = document.getElementById('apiKeyInput').value.trim();
+      if (!apiKey) {
+        showError('请输入 API Key');
+        return;
+      }
+
+      const prompt = document.getElementById('promptTextarea').value.trim();
+      if (!prompt) {
+        showError('提示词不能为空');
+        return;
+      }
+
+      document.getElementById('pollingAlert').classList.remove('hidden');
+      document.getElementById('confirmBtn').disabled = true;
+
+      try {
+        // Create task
+        const createRes = await fetch('https://api.kie.ai/api/v1/jobs/createTask', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${apiKey}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            model: 'nano-banana-pro',
+            input: {
+              prompt,
+              image_input: [],
+              aspect_ratio: '3:4',
+              resolution: '2K',
+              output_format: 'png',
+            },
+          }),
+        });
+
+        const createData = await createRes.json();
+        if (createData.code !== 200) {
+          throw new Error(createData.msg || '创建任务失败');
+        }
+
+        const taskId = createData.data.taskId;
+        pollForResult(taskId, apiKey);
+      } catch (err) {
+        hideError();
+        showError(err.message);
+        document.getElementById('pollingAlert').classList.add('hidden');
+        document.getElementById('confirmBtn').disabled = false;
+      }
+    }
+
+    async function pollForResult(taskId, apiKey) {
+      const maxAttempts = 60;
+      const intervalMs = 5000;
+
+      for (let i = 0; i < maxAttempts; i++) {
+        try {
+          const res = await fetch(`https://api.kie.ai/api/v1/jobs/recordInfo?taskId=${taskId}`, {
+            headers: { 'Authorization': `Bearer ${apiKey}` },
+          });
+          const data = await res.json();
+
+          if (data.data.state === 'success') {
+            const urls = JSON.parse(data.data.resultJson || '{}').resultUrls || [];
+            showResult(urls);
+            return;
+          }
+
+          if (data.data.state === 'fail') {
+            throw new Error(data.data.failMsg || '生成失败');
+          }
+        } catch (err) {
+          showError(err.message);
+          document.getElementById('pollingAlert').classList.add('hidden');
+          document.getElementById('confirmBtn').disabled = false;
+          return;
+        }
+
+        await new Promise(r => setTimeout(r, intervalMs));
+      }
+
+      showError('等待超时');
+      document.getElementById('pollingAlert').classList.add('hidden');
+      document.getElementById('confirmBtn').disabled = false;
+    }
+
+    function showResult(urls) {
+      document.getElementById('pollingAlert').classList.add('hidden');
+      document.getElementById('stepConfirm').classList.add('hidden');
+      document.getElementById('stepResult').classList.remove('hidden');
+
+      // Add new URLs to history
+      imageHistory = imageHistory.concat(urls);
+      currentIndex = imageHistory.length - 1;
+
+      renderCurrentImage();
+    }
+
+    function renderCurrentImage() {
+      const container = document.getElementById('resultImages');
+      const url = imageHistory[currentIndex];
+      container.innerHTML = `
+        <img class="result-img" src="${url}" alt="生成结果">
+        <div class="result-btns">
+          <button class="btn btn-secondary" onclick="regenerate()">重新生成</button>
+          <button class="btn btn-secondary" onclick="prevImage()" ${currentIndex <= 0 ? 'disabled' : ''}>上一张</button>
+        </div>
+      `;
+    }
+
+    function regenerate() {
+      const apiKey = document.getElementById('apiKeyInput').value.trim();
+      if (!apiKey) {
+        showError('请输入 API Key');
+        return;
+      }
+
+      document.getElementById('stepResult').classList.add('hidden');
+      document.getElementById('pollingAlert').classList.remove('hidden');
+
+      const prompt = document.getElementById('promptTextarea').value.trim();
+
+      fetch('https://api.kie.ai/api/v1/jobs/createTask', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${apiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: 'nano-banana-pro',
+          input: {
+            prompt,
+            image_input: [],
+            aspect_ratio: '3:4',
+            resolution: '2K',
+            output_format: 'png',
+          },
+        }),
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.code !== 200) throw new Error(data.msg || '创建任务失败');
+        pollForResult(data.data.taskId, apiKey);
+      })
+      .catch(err => {
+        showError(err.message);
+        document.getElementById('pollingAlert').classList.add('hidden');
+        document.getElementById('stepResult').classList.remove('hidden');
+      });
+    }
+
+    function prevImage() {
+      if (currentIndex > 0) {
+        currentIndex--;
+        renderCurrentImage();
+      }
+    }
+
+    function showError(msg) {
+      const el = document.getElementById('alertError');
+      el.textContent = msg;
+      el.classList.remove('hidden');
+    }
+
+    function hideError() {
+      document.getElementById('alertError').classList.add('hidden');
+    }
+
+    function resetAll() {
+      selectedPreset = null;
+      currentPrompt = '';
+      imageHistory = [];
+      currentIndex = -1;
+      document.getElementById('topicInput').value = '';
+      document.getElementById('titleInput').value = '';
+      document.getElementById('apiKeyInput').value = '';
+      document.getElementById('promptTextarea').value = '';
+      document.getElementById('alertError').classList.add('hidden');
+      document.getElementById('pollingAlert').classList.add('hidden');
+      document.getElementById('confirmBtn').disabled = false;
+      document.getElementById('stepSelect').classList.remove('hidden');
+      document.getElementById('stepInput').classList.add('hidden');
+      document.getElementById('stepConfirm').classList.add('hidden');
+      document.getElementById('stepResult').classList.add('hidden');
+      document.getElementById('presetInfo').classList.add('hidden');
+    }
+
+    initTopicGrid();
+  </script>
+</body>
+</html>
